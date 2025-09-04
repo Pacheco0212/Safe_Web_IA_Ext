@@ -1,0 +1,10 @@
+{
+    "name": "SafeWeb IA Extension",
+    "description": "An extension to enhance web safety using AI.",
+    "version": "1.0",
+    "manifest_version": 3,
+    "action": {
+        "default_popup": "/ui/popup/popup.html",
+        "default_icon": "/ui/icons/shield-png.png"
+    }
+}
