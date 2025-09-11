@@ -1,5 +1,23 @@
+
+<!doctype html>
 <html>
-    <body>
-        <h1>Hello Extensions</h1>
-    </body>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Capturas</title>
+  <style>
+    body{font:13px system-ui,sans-serif;min-width:360px;margin:12px}
+    ul{list-style:none;margin:0;padding:0;max-height:360px;overflow:auto}
+    li{border-bottom:1px solid #eee;padding:6px 0}
+  </style>
+</head>
+
+
+<body>
+  <h3 style="margin:0 0 8px">Últimas URLs</h3>
+  <ul id="list"></ul>
+  <button id="clear">Limpiar</button>
+  
+  <script type="module" src="popup.js"></script>
+</body>
 </html>
