@@ -10,8 +10,10 @@
  */
 
 
-//Importamos modulo de captura
+// Import URL capture module
 import { initCapture } from "./url_capture.js";
+// Import Analyzer module
+import { analyzeUrl } from "./analyzer.js";
 
 const STORAGE_KEY = "captures";
 const MAX_ITEMS = 100;
@@ -31,8 +33,11 @@ function normalizeUrl(u) {
 
 //Guarda la captura 
 async function save(entry) {
+  const analysis = await analyzeUrl(entry.url);
+  const enrichedEntry = { ...entry, analysis }; // Add analysis results to the object
+
   const { [STORAGE_KEY]: list = [] } = await chrome.storage.local.get(STORAGE_KEY);
-  const arr = [{...entry}, ...list];
+  const arr = [enrichedEntry, ...list];
  
   const out = [];
   for (const it of arr) {
@@ -52,7 +57,8 @@ const { captureActiveNow } = initCapture(async ({ url, tabId, title }) => {
   const norm = normalizeUrl(url);
   if (!norm || norm === lastUrl) return;
   lastUrl = norm;
-  await save({ url: norm, title, ts: Date.now() });
+
+  await save({ url: norm, title, ts: Date.now() }); // Here we sent the url to be analyzed and saved
 });
 
 // Captura la pestaña activa al instalar/arrancar

@@ -29,7 +29,8 @@
 
     "host_permissions": [
     "http://*/*",
-    "https://*/*"
+    "https://*/*",
+    "https://www.virustotal.com/*"
     ]
     
 }
