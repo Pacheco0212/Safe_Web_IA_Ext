@@ -3,7 +3,7 @@
 // ===============================================================
 // Description: Functions to interact with the VirusTotal API.
 
-const VIRUSTOTAL_API_KEY = "";
+const VIRUSTOTAL_API_KEY = "5ee5c754a74d080e76ec0da50b0e7ff1af3cfde7ce9f9e81661dca1caa31c663";
 const VIRUSTOTAL_SCAN_URL = "https://www.virustotal.com/api/v3/urls";
 
 function encodeUrlId(url) {
@@ -34,7 +34,6 @@ async function scanWithVirusTotal(url) {
         const urlId = encodeUrlId(url);
         // console.log("URL:", url + " [VirusTotal] URL Id:", urlId);
         
-        console.log("URL:", url);
         return await getVirusTotalReport(urlId);
 
     } catch (error) {
@@ -57,7 +56,7 @@ async function getVirusTotalReport(analysisId) {
     }
 
     const report = await response.json();
-    console.log("[VirusTotal] Full report:", report);
+    // console.log("[VirusTotal] Full report:", report);
 
     return normalizeVirusTotalReport(report, report.data.id);
 
@@ -70,16 +69,30 @@ async function getVirusTotalReport(analysisId) {
 function normalizeVirusTotalReport(report, url) {
   try {
     const attrs = report.data.attributes;
+    const results = attrs.last_analysis_results || {};
+
+    // Extraer motores que marcaron como malicioso o sospechoso
+    const detections = Object.entries(results)
+      .filter(([_, r]) => r.category === "malicious" || r.category === "suspicious")
+      .map(([engine]) => engine);
 
     return {
       url,
+      id: report.data.id,
       reputation: attrs.reputation ?? 0,
-      last_analysis_date: attrs.last_analysis_date,
+      categories: attrs.categories || {},
+      tags: attrs.tags || [],
       stats: {
         malicious: attrs.last_analysis_stats.malicious,
         suspicious: attrs.last_analysis_stats.suspicious,
         harmless: attrs.last_analysis_stats.harmless,
         undetected: attrs.last_analysis_stats.undetected,
+      },
+      detections, // lista de motores que detectaron
+      metadata: {
+        last_analysis_date: attrs.last_analysis_date,
+        first_submission_date: attrs.first_submission_date,
+        times_submitted: attrs.times_submitted,
       },
       votes: {
         harmless: attrs.total_votes?.harmless ?? 0,

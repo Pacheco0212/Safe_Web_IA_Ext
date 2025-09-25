@@ -1,0 +1,8 @@
+# ==========================================================
+# PROOF/PROTOTYPE FILES
+# ==========================================================
+
+# urlscan.js - URL scanner test failed
+# Reason: It takes a long time to scan
+# Status: Preserved locally for future reference
+**/urlscan.js 

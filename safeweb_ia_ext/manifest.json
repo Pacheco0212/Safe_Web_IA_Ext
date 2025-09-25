@@ -30,7 +30,8 @@
     "host_permissions": [
     "http://*/*",
     "https://*/*",
-    "https://www.virustotal.com/*"
+    "https://www.virustotal.com/*",
+    "https://www.urlscan.io/*"
     ]
     
 }
