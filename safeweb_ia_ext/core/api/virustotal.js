@@ -3,7 +3,7 @@
 // ===============================================================
 // Description: Functions to interact with the VirusTotal API.
 
-const VIRUSTOTAL_API_KEY = "5ee5c754a74d080e76ec0da50b0e7ff1af3cfde7ce9f9e81661dca1caa31c663";
+const VIRUSTOTAL_API_KEY = "";
 const VIRUSTOTAL_SCAN_URL = "https://www.virustotal.com/api/v3/urls";
 
 function encodeUrlId(url) {
