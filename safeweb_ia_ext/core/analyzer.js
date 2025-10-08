@@ -8,25 +8,28 @@ import { analyzeStructuralUrl } from "./api/structuralAnalysis.js";
 import { analyzeHostWithSSLLabs } from "./api/ssllabs.js";
 import { analyzeWithGoogleSafeBrowsing } from "./api/safebrowsing.js";
 import { analyzeWhois } from "./api/whois.js";
+import { analyzeWhoisFreaks } from "./api/whoisfreaks.js";
 
 async function analyzeUrl(url, options = { debug: false }) {
     console.log("[Analyzer] Analyzing URL:", url);
 
     const host = (new URL(url)).hostname;
 
-    const [vtResult, structuralResult, ssllabs, safebrowsing, whois] = await Promise.allSettled([
+    const [vtResult, structuralResult, ssllabs, safebrowsing, whoisfreaks] = await Promise.allSettled([
         scanWithVirusTotal(url),
         Promise.resolve(analyzeStructuralUrl(url, options)),
         analyzeHostWithSSLLabs(host, { starNew: false, fromCache: true, debug: false }),
         analyzeWithGoogleSafeBrowsing(url),
-        analyzeWhois(host)
+        // analyzeWhois(host),
+        analyzeWhoisFreaks(host)
     ]);
 
     // console.log("[Analyzer] [VirusTotal] Analysis results:", vtResult);
     // console.log("[Analyzer] [Structural] Analysis results:", structuralResult);
     // console.log("[Analyzer] [SSL Labs] Analysis results:", ssllabs);
     // console.log("[Analyzer] [Google Safe Browsing] Analysis results:", safebrowsing);
-    console.log("[Analyzer] [Whois API] Analysis results:", whois);
+    // console.log("[Analyzer] [Whois API] Analysis results:", whois);
+    console.log("[Analyzer] [Whois API] Analysis results:", whoisfreaks);
 
     return {
         virustotal:
@@ -37,8 +40,10 @@ async function analyzeUrl(url, options = { debug: false }) {
             ssllabs.status === "fulfilled" ? ssllabs.value : { error: ssllabs.reason },
         safebrowsing:
             safebrowsing.status === "fulfilled" ? safebrowsing.value : { error: safebrowsing.reason },
-        whois:
-            whois.status === "fulfilled" ? whois.value : { error: whois.reason },
+        // whois:
+            // whois.status === "fulfilled" ? whois.value : { error: whois.reason },
+        whoisfreaks:
+            whoisfreaks.status === "fulfilled" ? whoisfreaks.value : { error: whoisfreaks.reason },
         analyzedAt:
             Date.now()
     };

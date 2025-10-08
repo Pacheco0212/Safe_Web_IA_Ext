@@ -13,7 +13,7 @@ export async function analyzeWhois(domain) {
   const url = `${WHOIS_API_URL}?apiKey=${WHOIS_API_KEY}&domainName=${encodeURIComponent(domain)}&outputFormat=JSON`;
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url); 
 
     if (!response.ok) {
       const txt = await response.text();
