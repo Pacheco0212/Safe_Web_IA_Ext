@@ -6,10 +6,10 @@
 // ===============================================================
 
 
-const WHOIS_FREAKS_API_KEY = "";
+const WHOIS_FREAKS_API_KEY = "5548cb282ae44a8590f13ad0c87fa287";
 const WHOIS_FREAKS_API_URL = "https://api.whoisfreaks.com/v1.0/whois";
 
-export async function analyzeWhoisFreaks(domain) {
+export async function analyzeWhoisFreaks(domain, debug) {
   const url = `${WHOIS_FREAKS_API_URL}?apiKey=${WHOIS_FREAKS_API_KEY}&whois=live&domainName=${encodeURIComponent(domain)}`;
 
   try {
@@ -20,7 +20,7 @@ export async function analyzeWhoisFreaks(domain) {
     }
 
     const data = await response.json();
-    console.log("[WhoisFreaks] Raw data:", data);
+    if(debug) console.log("[WhoisFreaks] Raw data:", data);
     if (data.error) throw new Error(`[WhoisFreaks] API Error: ${data.error}`);
 
     // Helper para fechas seguras
@@ -37,7 +37,6 @@ export async function analyzeWhoisFreaks(domain) {
 
     const registrarName = data.domain_registrar.registrar_name || null;
     const registrant = data.registrant_contact || {};
-    const admin = data.admin_contact || {};
 
     // Cálculo correcto de edad y expiración
     const domainAgeDays = created

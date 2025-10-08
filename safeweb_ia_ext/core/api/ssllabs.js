@@ -7,9 +7,8 @@
 
 const SSLLABS_API_URL = "https://api.ssllabs.com/api/v3/analyze";
 
-async function analyzeHostWithSSLLabs(host) {
+async function analyzeHostWithSSLLabs(host, debug) {
   try {
-    // console.log(`[SSL Labs] Starting analysis for host: ${host}`);
 
     // 1) Try cache first
     const cached = await fetch(`${SSLLABS_API_URL}?host=${host}&fromCache=on`);
@@ -19,11 +18,11 @@ async function analyzeHostWithSSLLabs(host) {
 
     const cachedResult = await cached.json();
     if (cachedResult.status === "READY") {
-      // console.log("[SSL Labs] Found cached result:", cachedResult);
+      if(debug) console.log("[SSL Labs] Found cached result:", cachedResult);
       return normalizeSSLLabsReport(cachedResult);
     }
 
-    // console.log("[SSL Labs] No valid cached result, starting new analysis...");
+    if(debug) console.log("[SSL Labs] No valid cached result, starting new analysis...");
 
     // 2) If there is no cache, start a new scan
     const fresh = await fetch(`${SSLLABS_API_URL}?host=${host}&startNew=on&all=done`);
