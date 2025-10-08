@@ -10,26 +10,28 @@ import { analyzeWithGoogleSafeBrowsing } from "./api/safebrowsing.js";
 import { analyzeWhois } from "./api/whois.js";
 import { analyzeWhoisFreaks } from "./api/whoisfreaks.js";
 
-async function analyzeUrl(url, options = { debug: false }) {
+async function analyzeUrl(url, options = { debug: false, debugAnalyzer: true }) {
     console.log("[Analyzer] Analyzing URL:", url);
 
     const host = (new URL(url)).hostname;
 
     const [vtResult, structuralResult, ssllabs, safebrowsing, whoisfreaks] = await Promise.allSettled([
-        scanWithVirusTotal(url),
-        Promise.resolve(analyzeStructuralUrl(url, options)),
-        analyzeHostWithSSLLabs(host, { starNew: false, fromCache: true, debug: false }),
-        analyzeWithGoogleSafeBrowsing(url),
+        scanWithVirusTotal(url, options.debug),
+        Promise.resolve(analyzeStructuralUrl(url, options.debug)),
+        analyzeHostWithSSLLabs(host, options.debug),
+        analyzeWithGoogleSafeBrowsing(url, options.debug),
         // analyzeWhois(host),
-        analyzeWhoisFreaks(host)
+        analyzeWhoisFreaks(host, options.debug)
     ]);
 
-    // console.log("[Analyzer] [VirusTotal] Analysis results:", vtResult);
-    // console.log("[Analyzer] [Structural] Analysis results:", structuralResult);
-    // console.log("[Analyzer] [SSL Labs] Analysis results:", ssllabs);
-    // console.log("[Analyzer] [Google Safe Browsing] Analysis results:", safebrowsing);
-    // console.log("[Analyzer] [Whois API] Analysis results:", whois);
-    console.log("[Analyzer] [Whois API] Analysis results:", whoisfreaks);
+    if (options.debugAnalyzer) {
+        console.log("[Analyzer] [VirusTotal] Analysis results:", vtResult);
+        console.log("[Analyzer] [Structural] Analysis results:", structuralResult);
+        console.log("[Analyzer] [SSL Labs] Analysis results:", ssllabs);
+        console.log("[Analyzer] [Google Safe Browsing] Analysis results:", safebrowsing);
+        // console.log("[Analyzer] [Whois API] Analysis results:", whois);
+        console.log("[Analyzer] [Whois API] Analysis results:", whoisfreaks);
+    }
 
     return {
         virustotal:
