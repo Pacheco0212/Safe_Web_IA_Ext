@@ -3,7 +3,7 @@
 // ===============================================================
 // Description: Functions to interact with the VirusTotal API.
 
-const VIRUSTOTAL_API_KEY = "";
+const VIRUSTOTAL_API_KEY = "5ee5c754a74d080e76ec0da50b0e7ff1af3cfde7ce9f9e81661dca1caa31c663";
 const VIRUSTOTAL_SCAN_URL = "https://www.virustotal.com/api/v3/urls";
 
 function encodeUrlId(url) {
@@ -13,7 +13,7 @@ function encodeUrlId(url) {
     .replace(/=+$/, "");
 }
 
-async function scanWithVirusTotal(url) {
+async function scanWithVirusTotal(url, debug) {
     try {
         const response = await fetch(VIRUSTOTAL_SCAN_URL, {
             method: "POST",
@@ -29,12 +29,12 @@ async function scanWithVirusTotal(url) {
         }
 
         const result = await response.json();
-        // console.log("URL:", url + " [VirusTotal] Scan result:", result);
+        // if(debug) console.log("[VirusTotal] Scan result:", result);
 
         const urlId = encodeUrlId(url);
-        // console.log("URL:", url + " [VirusTotal] URL Id:", urlId);
+        // if(debug) console.log("[VirusTotal] URL Id:", urlId);
         
-        return await getVirusTotalReport(urlId);
+        return await getVirusTotalReport(urlId, debug);
 
     } catch (error) {
         console.error("Error parsing URL with VirusTotal:", error);
@@ -42,7 +42,7 @@ async function scanWithVirusTotal(url) {
     }
 }
 
-async function getVirusTotalReport(analysisId) {
+async function getVirusTotalReport(analysisId, debug) {
   try {
     const response = await fetch(`${VIRUSTOTAL_SCAN_URL}/${analysisId}`, {
         method: "GET",
@@ -56,7 +56,7 @@ async function getVirusTotalReport(analysisId) {
     }
 
     const report = await response.json();
-    // console.log("[VirusTotal] Full report:", report);
+    if(debug) console.log("[VirusTotal] Full report:", report);
 
     return normalizeVirusTotalReport(report, report.data.id);
 
@@ -71,7 +71,7 @@ function normalizeVirusTotalReport(report, url) {
     const attrs = report.data.attributes;
     const results = attrs.last_analysis_results || {};
 
-    // Extraer motores que marcaron como malicioso o sospechoso
+    // Extract engines that detected the URL as malicious or suspicious
     const detections = Object.entries(results)
       .filter(([_, r]) => r.category === "malicious" || r.category === "suspicious")
       .map(([engine]) => engine);
@@ -88,7 +88,7 @@ function normalizeVirusTotalReport(report, url) {
         harmless: attrs.last_analysis_stats.harmless,
         undetected: attrs.last_analysis_stats.undetected,
       },
-      detections, // lista de motores que detectaron
+      detections, // List of engines that detected the URL as malicious or suspicious
       metadata: {
         last_analysis_date: attrs.last_analysis_date,
         first_submission_date: attrs.first_submission_date,

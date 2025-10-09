@@ -6,9 +6,9 @@
 // ===============================================================
   
 const WHOIS_API_URL = "https://www.whoisxmlapi.com/whoisserver/WhoisService";
-const WHOIS_API_KEY = "";
+const WHOIS_API_KEY = "at_hQ6ft7WIXvr7Xhh8h3KXjPTHZWF7a";
 
-export async function analyzeWhois(domain) {
+async function analyzeWhois(domain) {
 
   const url = `${WHOIS_API_URL}?apiKey=${WHOIS_API_KEY}&domainName=${encodeURIComponent(domain)}&outputFormat=JSON`;
 
@@ -70,3 +70,4 @@ export async function analyzeWhois(domain) {
   }
 }
 
+export { analyzeWhois };

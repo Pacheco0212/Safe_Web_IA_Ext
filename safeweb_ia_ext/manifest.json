@@ -35,7 +35,8 @@
     "https://www.urlscan.io/*",
     "https://api.ssllabs.com/*",
     "https://safebrowsing.googleapis.com/*",
-    "https://www.whoisxmlapi.com/*"
+    "https://www.whoisxmlapi.com/*",
+    "https://api.whoisfreaks.com/*"
     ]
     
 }

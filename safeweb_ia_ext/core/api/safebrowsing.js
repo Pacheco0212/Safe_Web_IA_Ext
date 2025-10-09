@@ -1,21 +1,15 @@
-// core/api/safebrowsing.js
-// import { getApiKey } from "../storage/apiKey.js";
+// ===============================================================
+// Module: Google Safe Browsing API client
+// ===============================================================
+// Description:
+//  This module provides a function to query the Google Safe 
+// Browsing blacklist API
+// ===============================================================
 
 const GOOGLE_SAFEBROWSING_URL = "https://safebrowsing.googleapis.com/v4/threatMatches:find";
-const SAFEBROWSING_API_KEY = "";
+const SAFEBROWSING_API_KEY = "AIzaSyBde4KzBgQjmig7cO-vuhtGJjtxQB4BxQU";
 
-async function analyzeWithGoogleSafeBrowsing(url) {
-//   const apiKey = await getApiKey("GOOGLE_SAFE_BROWSING");
-//   if (!apiKey) {
-//     console.error("[Google Safe Browsing] No API Key found.");
-//     return {
-//       source: "Google Safe Browsing",
-//       url,
-//       success: false,
-//       error: "API Key not configured"
-//     };
-//   }
-
+export async function analyzeWithGoogleSafeBrowsing(url, debug) {
   try {
     const body = {
       client: {
@@ -47,27 +41,29 @@ async function analyzeWithGoogleSafeBrowsing(url) {
     }
 
     const data = await response.json();
+    if (debug) console.log("[Google Safe Browsing] Raw data:", data);
 
-    // Standardized report
+    // Extract matches
+    const matches = data.matches || [];
+
     const report = {
       source: "Google Safe Browsing",
       url,
       success: true,
-      malicious: !!data.matches,
+      malicious: matches.length > 0,
+      threatCount: matches.length,
       timestamp: new Date().toISOString(),
-      raw: data // All raw Google JSON is retained
-    };
-
-    // Extract important details from each threat (if any)
-    if (data.matches) {
-      report.threats = data.matches.map(match => ({
+      confidence: matches.length > 0 ? 1.0 : 0.0, // Useful for ML models
+      status: matches.length > 0 ? "Detected" : "Clean",
+      threats: matches.map(match => ({
         threatType: match.threatType,
         platformType: match.platformType,
         entryType: match.threatEntryType,
-        url: match.threat.url,
+        detectedUrl: match.threat?.url || url,
         metadata: match.threatEntryMetadata || {}
-      }));
-    }
+      })),
+      raw: data
+    };
 
     return report;
 
@@ -77,9 +73,9 @@ async function analyzeWithGoogleSafeBrowsing(url) {
       source: "Google Safe Browsing",
       url,
       success: false,
-      error: error.message
+      malicious: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
     };
   }
 }
-
-export { analyzeWithGoogleSafeBrowsing }
