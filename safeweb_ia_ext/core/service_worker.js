@@ -10,10 +10,12 @@
  */
 
 
+console.log('SW loaded')
 // Import URL capture module
 import { initCapture } from "./url_capture.js";
 // Import Analyzer module
 import { analyzeUrl } from "./analyzer.js";
+console.log('Cargue los modulos')
 
 const STORAGE_KEY = "captures";
 const MAX_ITEMS = 100;
@@ -30,6 +32,7 @@ function normalizeUrl(u) {
         return null; 
     }
 }
+
 
 //Guarda la captura 
 async function save(entry) {
@@ -51,6 +54,7 @@ async function save(entry) {
   // Avisar al popup (si está abierto)
   chrome.runtime.sendMessage({ type: "NEW_CAPTURE", payload: entry }).catch(() => {});
 }
+
 
 // Registra la captura; esto corre al cargar el SW
 const { captureActiveNow } = initCapture(async ({ url, tabId, title }) => {
