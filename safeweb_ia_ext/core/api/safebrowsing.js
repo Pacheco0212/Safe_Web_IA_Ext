@@ -6,10 +6,14 @@
 // Browsing blacklist API
 // ===============================================================
 
+import { getApiKeys } from "../service_worker.js";
+
 const GOOGLE_SAFEBROWSING_URL = "https://safebrowsing.googleapis.com/v4/threatMatches:find";
-const SAFEBROWSING_API_KEY = "AIzaSyBde4KzBgQjmig7cO-vuhtGJjtxQB4BxQU";
+// const SAFEBROWSING_API_KEY = "AIzaSyBde4KzBgQjmig7cO-vuhtGJjtxQB4BxQU";
 
 export async function analyzeWithGoogleSafeBrowsing(url, debug) {
+  const { safebrowsing } = await getApiKeys();
+
   try {
     const body = {
       client: {
@@ -29,7 +33,7 @@ export async function analyzeWithGoogleSafeBrowsing(url, debug) {
       }
     };
 
-    const response = await fetch(`${GOOGLE_SAFEBROWSING_URL}?key=${SAFEBROWSING_API_KEY}`, {
+    const response = await fetch(`${GOOGLE_SAFEBROWSING_URL}?key=${safebrowsing}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)

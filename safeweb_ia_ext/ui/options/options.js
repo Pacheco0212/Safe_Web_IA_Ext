@@ -7,6 +7,6 @@ document.getElementById("saveKey").addEventListener("click", () => {
   }
 
   chrome.storage.local.set({ safeBrowsingApiKey: key }, () => {
-    alert("API Key de Google Safe Browsing guardada correctamente ✅");
+    alert("API Key de Google Safe Browsing guardada correctamente.");
   });
 });

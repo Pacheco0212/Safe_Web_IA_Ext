@@ -3,8 +3,11 @@
 // ===============================================================
 // Description: Functions to interact with the VirusTotal API.
 
-const VIRUSTOTAL_API_KEY = "5ee5c754a74d080e76ec0da50b0e7ff1af3cfde7ce9f9e81661dca1caa31c663";
+import { getApiKeys } from "../service_worker.js";
+
+// const VIRUSTOTAL_API_KEY = "5ee5c754a74d080e76ec0da50b0e7ff1af3cfde7ce9f9e81661dca1caa31c663";
 const VIRUSTOTAL_SCAN_URL = "https://www.virustotal.com/api/v3/urls";
+
 
 function encodeUrlId(url) {
   return btoa(url)
@@ -14,11 +17,13 @@ function encodeUrlId(url) {
 }
 
 async function scanWithVirusTotal(url, debug) {
+  const { virustotal } = await getApiKeys();
+
     try {
         const response = await fetch(VIRUSTOTAL_SCAN_URL, {
             method: "POST",
             headers: {
-                "x-apikey": VIRUSTOTAL_API_KEY,
+                "x-apikey": virustotal,
                 "Content-Type": "application/x-www-form-urlencoded"
             },
             body: `url=${encodeURIComponent(url)}`,
@@ -43,11 +48,13 @@ async function scanWithVirusTotal(url, debug) {
 }
 
 async function getVirusTotalReport(analysisId, debug) {
+  const { virustotal } = await getApiKeys();
+  
   try {
     const response = await fetch(`${VIRUSTOTAL_SCAN_URL}/${analysisId}`, {
         method: "GET",
         headers: {
-            "x-apikey": VIRUSTOTAL_API_KEY
+            "x-apikey": virustotal
         }
     });
 
