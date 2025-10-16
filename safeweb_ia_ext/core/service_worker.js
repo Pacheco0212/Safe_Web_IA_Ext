@@ -31,7 +31,7 @@ const API_KEYS = {
 // ========= Saving API keys in local storage =========
 chrome.runtime.onInstalled.addListener(async () => {
   await chrome.storage.local.set({ api_keys: API_KEYS });
-  // console.log("API Keys almacenadas en chrome.storage.local");
+  console.log("API Keys almacenadas en chrome.storage.local");
 });
 
 // Auxiliar function to get all API keys
@@ -84,10 +84,6 @@ async function save(entry) {
 }
 
 // ========= Log the capture ========= 
-const { captureActiveNow } = initCapture(async ({ url, tabId, title }) => {
-
-
-
 // Registra la captura; esto corre al cargar el SW
 const { captureActiveNow } = initCapture(async ({ url, fullUrl, tabId, title }) => {
   const norm = normalizeUrl(url);
