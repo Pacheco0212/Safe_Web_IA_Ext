@@ -10,10 +10,12 @@
  */
 
 
+console.log('SW loaded')
 // Import URL capture module
 import { initCapture } from "./url_capture.js";
 // Import Analyzer module
 import { analyzeUrl } from "./analyzer.js";
+console.log('Cargue los modulos')
 
 const STORAGE_KEY = "captures";
 const MAX_ITEMS = 100;
@@ -39,19 +41,26 @@ export async function getApiKeys() {
 }
 
 // ========= URLs normalization =========
+// Funcion para normalizar una URL para evitar diferencias por #hash, etc. 
 function normalizeUrl(u) {
   try { 
+
     const url = new URL(u); 
-    url.hash = ""; 
-    return url.toString(); }
-  
-    catch { 
-        return null; 
+    return url.origin; 
+
+  }catch { 
+    return null; 
     }
 }
 
 // ========= Save and analyze each capture =========
+
+//Funcion para guardar la url en el STORAGE 
 async function save(entry) {
+
+  console.log('La URL a analizar es:', entry.url)
+  console.log('La URL completa es:', entry.fullUrl)
+
   const analysis = await analyzeUrl(entry.url);
   const enrichedEntry = { ...entry, analysis }; // Add analysis results to the object
 
@@ -76,13 +85,21 @@ async function save(entry) {
 
 // ========= Log the capture ========= 
 const { captureActiveNow } = initCapture(async ({ url, tabId, title }) => {
-  const norm = normalizeUrl(url);
-  if (!norm || norm === lastUrl) return;
-  lastUrl = norm;
 
-  await save({ url: norm, title, ts: Date.now() }); // Here we sent the url to be analyzed and saved
+
+
+// Registra la captura; esto corre al cargar el SW
+const { captureActiveNow } = initCapture(async ({ url, fullUrl, tabId, title }) => {
+  const norm = normalizeUrl(url);
+  if (!norm || norm === lastUrl) 
+    return;
+
+  lastUrl = norm;
+  await save({ url: norm, fullUrl, title, ts: Date.now() }); // Here we sent the url to be analyzed and saved
 });
 
 // ========= Capture events =========
+
+// Captura la pestaña activa al instalar/arrancar
 chrome.runtime.onInstalled.addListener(captureActiveNow);
 chrome.runtime.onStartup.addListener(captureActiveNow);
