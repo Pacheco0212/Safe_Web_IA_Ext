@@ -5,7 +5,7 @@
 //  This module provides a function to analyze domain WHOIS information
 // ===============================================================
 
-import { getApiKeys } from "../service_worker.js";
+import { getApiKeys } from "../utils/storage_utils.js";
 
 // const WHOIS_FREAKS_API_KEY = "5548cb282ae44a8590f13ad0c87fa287";
 const WHOIS_FREAKS_API_URL = "https://api.whoisfreaks.com/v1.0/whois";
