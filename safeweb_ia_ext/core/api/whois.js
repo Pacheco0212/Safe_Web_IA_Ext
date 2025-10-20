@@ -5,7 +5,7 @@
 // 
 // ===============================================================
 
-import { getApiKeys } from "../service_worker.js";
+import { getApiKeys } from "../utils/storage_utils.js";
   
 const WHOIS_API_URL = "https://www.whoisxmlapi.com/whoisserver/WhoisService";
 // const WHOIS_API_KEY = "at_hQ6ft7WIXvr7Xhh8h3KXjPTHZWF7a";

@@ -6,7 +6,7 @@
 // Browsing blacklist API
 // ===============================================================
 
-import { getApiKeys } from "../service_worker.js";
+import { getApiKeys } from "../utils/storage_utils.js";
 
 const GOOGLE_SAFEBROWSING_URL = "https://safebrowsing.googleapis.com/v4/threatMatches:find";
 // const SAFEBROWSING_API_KEY = "AIzaSyBde4KzBgQjmig7cO-vuhtGJjtxQB4BxQU";
