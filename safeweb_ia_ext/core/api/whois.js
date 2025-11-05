@@ -4,13 +4,17 @@
 // Description:
 // 
 // ===============================================================
+
+import { getApiKeys } from "../utils/storage_utils.js";
   
 const WHOIS_API_URL = "https://www.whoisxmlapi.com/whoisserver/WhoisService";
-const WHOIS_API_KEY = "at_hQ6ft7WIXvr7Xhh8h3KXjPTHZWF7a";
+// const WHOIS_API_KEY = "at_hQ6ft7WIXvr7Xhh8h3KXjPTHZWF7a";
+
 
 async function analyzeWhois(domain) {
 
-  const url = `${WHOIS_API_URL}?apiKey=${WHOIS_API_KEY}&domainName=${encodeURIComponent(domain)}&outputFormat=JSON`;
+  const { whois } = await getApiKeys();
+  const url = `${WHOIS_API_URL}?apiKey=${whois}&domainName=${encodeURIComponent(domain)}&outputFormat=JSON`;
 
   try {
     const response = await fetch(url); 

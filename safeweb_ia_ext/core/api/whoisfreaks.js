@@ -5,12 +5,14 @@
 //  This module provides a function to analyze domain WHOIS information
 // ===============================================================
 
+import { getApiKeys } from "../utils/storage_utils.js";
 
-const WHOIS_FREAKS_API_KEY = "5548cb282ae44a8590f13ad0c87fa287";
+// const WHOIS_FREAKS_API_KEY = "5548cb282ae44a8590f13ad0c87fa287";
 const WHOIS_FREAKS_API_URL = "https://api.whoisfreaks.com/v1.0/whois";
 
 export async function analyzeWhoisFreaks(domain, debug) {
-  const url = `${WHOIS_FREAKS_API_URL}?apiKey=${WHOIS_FREAKS_API_KEY}&whois=live&domainName=${encodeURIComponent(domain)}`;
+  const { whoisfreaks } = await getApiKeys();
+  const url = `${WHOIS_FREAKS_API_URL}?apiKey=${whoisfreaks}&whois=live&domainName=${encodeURIComponent(domain)}`;
 
   try {
     const response = await fetch(url);
