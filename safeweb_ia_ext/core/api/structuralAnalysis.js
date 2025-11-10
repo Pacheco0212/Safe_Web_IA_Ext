@@ -1,174 +1,145 @@
 // ==================================================================
-// Module: Structural URL Analysis (raw, no weights or ranking)
-// ====================================================================
-// Returns a normalized object with:
-// - details by criterion (value, score, explanation)
-// - detected reasons
-// - analysis metadata
-// Optional: debug = true prints console.log of the report.
-// ===============================================================
+// Módulo: Análisis estructural de URL 
+
 
 import { COMMON_BRANDS } from "../utils/constants.js";
 import {
   safeParseUrl, isIPv4, isIPv6, hasPunycode, normalizedDistance,
   keyboardVariantSimilarity, tokenAnomalies, tokensInPathOrQuery,
   queryParamAnalysis, encodedAnalysis, isShortenerHost,
-  isSuspiciousTld, extractBaseDomain, scoreBool, scoreRatio
+  isSuspiciousTld, extractBaseDomain
 } from "../utils/helpers.js";
-
 
 async function analyzeStructuralUrl(urlString, options = {}) {
   const debug = !!options.debug;
   const report = {
     url: urlString,
-    parsed: null,
-    criteria: {},
-    reasons: [],
-    evaluatedAt: Date.now()
+    analisis: [],
+    fecha: new Date().toLocaleString()
   };
 
+  // --- Intentar parsear URL ---
   const urlObj = safeParseUrl(urlString);
   if (!urlObj) {
-    report.reasons.push("URL inválida o no parseable.");
-    report.criteria.invalid = { value: true, score: 1, explanation: "No se pudo parsear la URL." };
-    if (debug) console.log("[StructuralRaw] Report:", report);
+    report.analisis.push("La URL es inválida o no se pudo analizar correctamente.");
+    if (debug) console.log(report);
     return report;
   }
-  report.parsed = {
-    protocol: urlObj.protocol,
-    host: urlObj.hostname,
-    port: urlObj.port || null,
-    pathname: urlObj.pathname,
-    search: urlObj.search,
-    origin: urlObj.origin
-  };
 
   const host = urlObj.hostname.toLowerCase();
 
-  // --- Typosquatting detection ---
+  // === [1] Detección de Typosquatting ===
   const baseDomain = extractBaseDomain(host);
-  let bestBrand = null;
-  let bestRatio = 1;
+  let mejorMarca = null;
+  let mejorDistancia = 1;
+
   for (const brand of COMMON_BRANDS) {
-    const ratio = normalizedDistance(baseDomain, brand);
-    if (ratio < bestRatio) { bestRatio = ratio; bestBrand = brand; }
-    const kb = keyboardVariantSimilarity(baseDomain, brand);
-    if (kb < bestRatio) { bestRatio = kb; bestBrand = brand; }
+    const ratio1 = normalizedDistance(baseDomain, brand);
+    const ratio2 = keyboardVariantSimilarity(baseDomain, brand);
+    const minRatio = Math.min(ratio1, ratio2);
+    if (minRatio < mejorDistancia) {
+      mejorDistancia = minRatio;
+      mejorMarca = brand;
+    }
   }
-  const typosSeverity = Math.max(0, 1 - bestRatio);
-  const typosDetected = (typosSeverity > 0.35);
-  report.criteria.typosquatting = {
-    value: typosDetected,
-    score: scoreRatio(typosSeverity),
-    explanation: typosDetected 
-      ? `Base domain "${baseDomain}" similar to well-known brand "${bestBrand}" (distance ${bestRatio.toFixed(2)}).` 
-      : `No significant similarity detected (best match ${bestBrand}, ratio ${bestRatio.toFixed(2)}).`
-  };
-  if (typosDetected) report.reasons.push(report.criteria.typosquatting.explanation);
 
-  // --- TLD reputation ---
-  const suspiciousTld = isSuspiciousTld(host);
-  report.criteria.tld_reputation = {
-    value: suspiciousTld || null,
-    score: scoreBool(suspiciousTld),
-    explanation: suspiciousTld ? `TLD "${suspiciousTld}" listed as suspicious.` : "TLD not listed."
-  };
-  if (suspiciousTld) report.reasons.push(report.criteria.tld_reputation.explanation);
+  if (1 - mejorDistancia > 0.35) {
+    report.analisis.push(`El dominio "${baseDomain}" es muy parecido a la marca "${mejorMarca}", podría intentar suplantarla.`);
+  } else {
+    report.analisis.push(`El dominio "${baseDomain}" no muestra similitud con marcas conocidas.`);
+  }
 
-  // --- IP in host ---
-  const ipHost = isIPv4(host) || isIPv6(host);
-  report.criteria.ip_in_host = {
-    value: ipHost,
-    score: scoreBool(ipHost),
-    explanation: ipHost ? "Host is a literal IP" : "Host is not an IP."
-  };
-  if (ipHost) report.reasons.push(report.criteria.ip_in_host.explanation);
+  // === [2] Reputación del TLD ===
+  const tldSospechoso = isSuspiciousTld(host);
+  if (tldSospechoso) {
+    report.analisis.push(`El dominio utiliza un TLD sospechoso: .${tldSospechoso}.`);
+  } else {
+    report.analisis.push("El TLD del dominio no se encuentra en listas sospechosas.");
+  }
 
-  // --- Punycode ---
-  const puny = hasPunycode(host);
-  report.criteria.punycode = {
-    value: puny,
-    score: scoreBool(puny),
-    explanation: puny ? "Contains puyncode (xn--)" : "Does not contain punycode."
-  };
-  if (puny) report.reasons.push(report.criteria.punycode.explanation);
+  // === [3] IP literal ===
+  const esIP = isIPv4(host) || isIPv6(host);
+  report.analisis.push(esIP ? "El dominio es una dirección IP (posible intento de ocultar identidad)." : "El dominio no es una dirección IP.");
 
-  // --- Subdomain structure ---
-  const parts = host.split(".");
-  const subdomainCount = Math.max(0, parts.length - 2);
-  const anomalies = tokenAnomalies(host);
-  report.criteria.subdomain_structure = {
-    value: { subdomainCount, anomalies },
-    score: subdomainCount >= 3 || anomalies.longLabel || anomalies.manyHyphens || anomalies.repeatedChars ? 1 : subdomainCount >= 1 ? 0.3 : 0,
-    explanation: `Subdomains: ${subdomainCount}, anomalías: ${JSON.stringify(anomalies)}`
-  };
+  // === [4] Punycode ===
+  const contienePuny = hasPunycode(host);
+  report.analisis.push(contienePuny ? "El dominio contiene Punycode (xn--), posible intento de imitar caracteres." : "El dominio no contiene Punycode.");
 
-  // --- Path tokens ---
+  // === [5] Subdominios y anomalías ===
+  const partes = host.split(".");
+  const cantidadSubdominios = Math.max(0, partes.length - 2);
+  const anomalías = tokenAnomalies(host);
+
+  if (cantidadSubdominios >= 3 || anomalías.longLabel || anomalías.manyHyphens || anomalías.repeatedChars) {
+    report.analisis.push(`El dominio tiene ${cantidadSubdominios} subdominios o presenta anomalías (${JSON.stringify(anomalías)}).`);
+  } else {
+    report.analisis.push(`El dominio tiene ${cantidadSubdominios} subdominios y no muestra anomalías.`);
+  }
+
+  // === [6] Tokens en el path o query ===
   const tokens = tokensInPathOrQuery(urlObj);
-  report.criteria.path_login_tokens = {
-    value: { pathFlag: tokens.pathFlag, queryFlag: tokens.queryFlag },
-    score: scoreBool(tokens.pathFlag || tokens.queryFlag),
-    explanation: (tokens.pathFlag || tokens.queryFlag) ? "Path/query with login/secure tokens." : "No suspicious tokens in path/query."
-  };
+  if (tokens.pathFlag || tokens.queryFlag) {
+    report.analisis.push("La URL contiene palabras como 'login', 'secure' o 'verify' en su ruta o parámetros.");
+  } else {
+    report.analisis.push("La URL no contiene tokens de inicio de sesión o seguridad.");
+  }
 
-  // --- @ symbol ---
-  const hasAt = urlString.includes("@");
-  report.criteria.at_symbol = {
-    value: hasAt,
-    score: scoreBool(hasAt),
-    explanation: hasAt ? "The URL contains '@'." : "Does not contain '@'."
-  };
+  // === [7] Símbolo '@' ===
+  const tieneArroba = urlString.includes("@");
+  report.analisis.push(tieneArroba ? "La URL contiene el símbolo '@', lo cual puede ser engañoso." : "La URL no contiene el símbolo '@'.");
 
-  // --- URL length ---
-  const urlLen = urlString.length;
-  report.criteria.url_length = {
-    value: urlLen,
-    score: urlLen >= 200 ? 1 : urlLen >= 120 ? 0.6 : urlLen >= 80 ? 0.3 : 0,
-    explanation: `URL Length = ${urlLen} characters.`
-  };
+  // === [8] Longitud de la URL ===
+  const longitud = urlString.length;
+  if (longitud > 200) {
+    report.analisis.push(`La URL es muy larga (${longitud} caracteres).`);
+  } else if (longitud > 120) {
+    report.analisis.push(`La URL tiene una longitud media (${longitud} caracteres).`);
+  } else {
+    report.analisis.push(`La URL es corta (${longitud} caracteres).`);
+  }
 
-  // --- Query params ---
+  // === [9] Parámetros en la query ===
   const qp = queryParamAnalysis(urlObj);
-  report.criteria.query_params = {
-    value: qp,
-    score: qp.paramsCount >= 10 ? 1 : qp.paramsCount >= 4 ? 0.5 : 0,
-    explanation: qp.suspiciousKeys.length ? `Suspicious parameters: ${qp.suspiciousKeys.join(", ")}` : `Amount: ${qp.paramsCount}`
-  };
+  if (qp.paramsCount > 0) {
+    report.analisis.push(`La URL contiene ${qp.paramsCount} parámetros${qp.suspiciousKeys.length ? ` (sospechosos: ${qp.suspiciousKeys.join(", ")})` : ""}.`);
+  } else {
+    report.analisis.push("La URL no contiene parámetros en la query.");
+  }
 
-  // --- Encoded chars ---
+  // === [10] Caracteres codificados ===
   const enc = encodedAnalysis(urlString);
-  report.criteria.encoded_chars = {
-    value: enc,
-    score: enc.hasMany ? 1 : enc.pctCount >= 2 ? 0.6 : 0,
-    explanation: enc.hasMany ? `Multiple encoded sequences (${enc.pctCount}).` : "Normal encoding."
-  };
+  if (enc.hasMany) {
+    report.analisis.push(`La URL contiene muchas secuencias codificadas (${enc.pctCount} apariciones de '%').`);
+  } else if (enc.pctCount > 0) {
+    report.analisis.push(`La URL contiene algunas codificaciones (%xx).`);
+  } else {
+    report.analisis.push("La URL no contiene caracteres codificados.");
+  }
 
-  // --- Shortener ---
-  const shortener = isShortenerHost(host);
-  report.criteria.shortener = {
-    value: shortener,
-    score: scoreBool(shortener),
-    explanation: shortener ? `Host is shortener (${host}).` : "No known shortener."
-  };
+  // === [11] Acortadores ===
+  const esShort = isShortenerHost(host);
+  report.analisis.push(esShort ? `El dominio pertenece a un servicio de acortamiento (${host}).` : "El dominio no es un servicio de acortamiento.");
 
-  // --- Port ---
-  const port = urlObj.port;
-  const portSuspicious = port && port !== "80" && port !== "443";
-  report.criteria.port = {
-    value: port || null,
-    score: scoreBool(portSuspicious),
-    explanation: portSuspicious ? `Non-standard port: ${port}.` : "Standard or missing port."
-  };
+  // === [12] Puerto ===
+  const puerto = urlObj.port;
+  if (puerto && puerto !== "80" && puerto !== "443") {
+    report.analisis.push(`La URL utiliza un puerto no estándar (${puerto}).`);
+  } else {
+    report.analisis.push("La URL usa un puerto estándar (80 o 443).");
+  }
 
-  // --- HTTPS ---
-  const usesHttps = urlObj.protocol === "https:";
-  report.criteria.https = {
-    value: usesHttps,
-    score: usesHttps ? 0 : 1,
-    explanation: usesHttps ? "Use HTTPS." : "Does not use HTTPS."
-  };
+  // === [13] HTTPS ===
+  const usaHttps = urlObj.protocol === "https:";
+  report.analisis.push(usaHttps ? "La URL usa el protocolo HTTPS." : "La URL no usa HTTPS.");
 
-  if (debug) console.log("[StructuralRaw] Report:", report);
+  // --- Mostrar en consola si debug está activo ---
+  if (debug) {
+    console.log("=== Análisis estructural de URL ===");
+    console.log("URL:", report.url);
+    report.analisis.forEach((txt, i) => console.log(`${i + 1}. ${txt}`));
+    console.log("===================================");
+  }
+
   return report;
 }
 

@@ -27,6 +27,8 @@ const API_KEYS = {
 // ===== Initialize API keys =====
 chrome.runtime.onInstalled.addListener(() => initApiKeys(API_KEYS));
 
+
+
 // ===== URL Normalization =====
 function normalizeUrl(u) {
   try {
@@ -36,6 +38,7 @@ function normalizeUrl(u) {
     return null;
   }
 }
+
 
 // ===== Save and analyze URL =====
 async function save(entry) {

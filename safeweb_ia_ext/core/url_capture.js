@@ -24,7 +24,7 @@ export function initCapture(onCapture) {
   ]);
 
 
-  //Funcion para validad que la url sea http/https. Filtramos urls con incial chrome://, file://, edge://, etc.
+  //Funcion para validar que la url sea http/https. Filtramos urls con incial chrome://, file://, edge://, etc.
   function isHttp(u) {
     try { 
       const x = new URL(u); 
@@ -68,10 +68,10 @@ export function initCapture(onCapture) {
 
     return false;
   
-  } catch {
-     return true; 
+   } catch {
+      return true; 
     } // si no parsea, mejor no capturar
-}
+ }
 
 
   //Funcion que lee la pestaña por id y, si está activa y su URL es válida, dispara un callback.
