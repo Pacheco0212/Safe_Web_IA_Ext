@@ -10,7 +10,7 @@ import { analyzeWithGoogleSafeBrowsing } from "./api/safebrowsing.js";
 import { analyzeWhois } from "./api/whois.js";
 import { analyzeWhoisFreaks } from "./api/whoisfreaks.js";
 
-async function analyzeUrl(url, options = { debug: false, debugAnalyzer: false }) {
+async function analyzeUrl(url, options = { debug: false, debugAnalyzer: true }) {
     console.log("[Analyzer] Analyzing URL:", url);
 
     const host = (new URL(url)).hostname;
