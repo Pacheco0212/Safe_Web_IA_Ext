@@ -9,6 +9,7 @@ import { analyzeHostWithSSLLabs } from "./api/ssllabs.js";
 import { analyzeWithGoogleSafeBrowsing } from "./api/safebrowsing.js";
 import { analyzeWhois } from "./api/whois.js";
 import { analyzeWhoisFreaks } from "./api/whoisfreaks.js";
+import { saveIndividualReport, createGlobalReport} from "./utils/storage_utils.js";
 
 async function analyzeUrl(url, options = { debug: false, debugAnalyzer: false }) {
     console.log("[Analyzer] Analyzing URL:", url);
@@ -33,22 +34,19 @@ async function analyzeUrl(url, options = { debug: false, debugAnalyzer: false })
         console.log("[Analyzer] [Whois API] Analysis results:", whoisfreaks);
     }
 
-    return {
-        virustotal:
-            vtResult.status === "fulfilled" ? vtResult.value : { error: vtResult.reason },
-        structuralAnalysis:
-            structuralResult.status === "fulfilled" ? structuralResult.value : { error: structuralResult.reason },
-        ssllabs:
-            ssllabs.status === "fulfilled" ? ssllabs.value : { error: ssllabs.reason },
-        safebrowsing:
-            safebrowsing.status === "fulfilled" ? safebrowsing.value : { error: safebrowsing.reason },
-        // whois:
-            // whois.status === "fulfilled" ? whois.value : { error: whois.reason },
-        whoisfreaks:
-            whoisfreaks.status === "fulfilled" ? whoisfreaks.value : { error: whoisfreaks.reason },
-        analyzedAt:
-            Date.now()
+    const finalReport = {
+        url,
+        virustotal: vtResult.status === "fulfilled" ? vtResult.value : { error: vtResult.reason },
+        structuralAnalysis: structuralResult.status === "fulfilled" ? structuralResult.value : { error: structuralResult.reason },
+        ssllabs: ssllabs.status === "fulfilled" ? ssllabs.value : { error: ssllabs.reason },
+        safebrowsing: safebrowsing.status === "fulfilled" ? safebrowsing.value : { error: safebrowsing.reason },
+        whoisfreaks: whoisfreaks.status === "fulfilled" ? whoisfreaks.value : { error: whoisfreaks.reason },
+        analyzedAt: Date.now()
     };
+
+    await saveIndividualReport(finalReport);
+
+    return finalReport;
 }
 
 export { analyzeUrl };
