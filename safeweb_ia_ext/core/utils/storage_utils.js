@@ -39,3 +39,30 @@ export async function findExistingAnalysis(url) {
   const captures = await getCaptures();
   return captures.find(item => item.url === url) || null;
 }
+
+// ===== Save individual analysis report =====
+export async function saveIndividualReport(report) {
+  const captures = await getCaptures();
+
+  // Evitar duplicados por URL
+  const filtered = captures.filter(r => r.url !== report.url);
+  filtered.push(report);
+
+  await saveCaptures(filtered);
+  console.log(`[Storage] Reporte guardado en captures para: ${report.url}`);
+}
+
+// ===== Create a unified global report =====
+export async function createGlobalReport() {
+  const captures = await getCaptures();
+  if (!captures.length) return null;
+
+  const unified = {
+    totalReports: captures.length,
+    generatedAt: Date.now(),
+    data: captures
+  };
+
+  console.log("[Storage] Reporte global creado:", unified);
+  return unified;
+}
