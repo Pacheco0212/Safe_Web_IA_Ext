@@ -49,7 +49,7 @@ export async function saveIndividualReport(report) {
   filtered.push(report);
 
   await saveCaptures(filtered);
-  console.log(`[Storage] Reporte guardado en captures para: ${report.url}`);
+  // console.log(`[Storage] Reporte guardado en captures para: ${report.url}`);
 }
 
 // ===== Create a unified global report =====

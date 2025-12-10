@@ -1,51 +1,86 @@
 // ===============================================================
-// Module: Analyzer Core
+// Module: Analyzer Core (CORREGIDO)
 // ===============================================================
-// Description: Core functions for analyzing URLs using various services.
 
-import { scanWithVirusTotal } from "./api/virustotal.js";
 import { analyzeStructuralUrl } from "./api/structuralAnalysis.js";
-import { analyzeHostWithSSLLabs } from "./api/ssllabs.js";
+import { scanSsl } from "./api/ssl.js";
 import { analyzeWithGoogleSafeBrowsing } from "./api/safebrowsing.js";
-import { analyzeWhois } from "./api/whois.js";
 import { analyzeWhoisFreaks } from "./api/whoisfreaks.js";
-import { saveIndividualReport, createGlobalReport} from "./utils/storage_utils.js";
+import { saveIndividualReport } from "./utils/storage_utils.js";
+import { extractFeaturesForModel } from "./utils/feature_extractor.js";
+
+async function ensureOffscreenDocument() {
+    await chrome.runtime.sendMessage({ action: "create_offscreen" });
+}
 
 async function analyzeUrl(url, options = { debug: false, debugAnalyzer: true }) {
     console.log("[Analyzer] Analyzing URL:", url);
-
     const host = (new URL(url)).hostname;
 
-    const [vtResult, structuralResult, ssllabs, safebrowsing, whoisfreaks] = await Promise.allSettled([
-        scanWithVirusTotal(url, options.debug),
+    // 1. Recolección de datos
+    const [structuralResult, sslResult, safebrowsing, whoisfreaks] = await Promise.allSettled([
         Promise.resolve(analyzeStructuralUrl(url, options.debug)),
-        analyzeHostWithSSLLabs(host, options.debug),
+        scanSsl(host, false, options.debug),
         analyzeWithGoogleSafeBrowsing(url, options.debug),
-        // analyzeWhois(host),
         analyzeWhoisFreaks(host, options.debug)
     ]);
 
+    const structData = structuralResult.status === "fulfilled" ? structuralResult.value : {};
+    const sslData = sslResult.status === "fulfilled" ? sslResult.value : {};
+    const whoisData = whoisfreaks.status === "fulfilled" ? whoisfreaks.value : {};
+    const sbData = safebrowsing.status === "fulfilled" ? safebrowsing.value : {};
+
     if (options.debugAnalyzer) {
-        console.log("[Analyzer] [VirusTotal] Analysis results:", vtResult);
-        console.log("[Analyzer] [Structural] Analysis results:", structuralResult);
-        console.log("[Analyzer] [SSL Labs] Analysis results:", ssllabs);
-        console.log("[Analyzer] [Google Safe Browsing] Analysis results:", safebrowsing);
-        // console.log("[Analyzer] [Whois API] Analysis results:", whois);
-        console.log("[Analyzer] [Whois API] Analysis results:", whoisfreaks);
+        console.log("[Analyzer] Data collected:", { structData, sslData, sbData, whoisData });
     }
 
+    // 2. Preparar features
+    const features = extractFeaturesForModel(url, structData, sslData, whoisData, sbData);
+
+    // 3. IA via Offscreen
+    let aiPrediction = "UNKNOWN";
+    let aiProbability = 0;
+    let aiError = null;
+
+    try {
+        await ensureOffscreenDocument();
+
+        const response = await chrome.runtime.sendMessage({
+            action: 'analyze_url_ai',
+            inputs: features
+        });
+
+        if (!response) throw new Error("Respuesta IA vacía");
+
+        if (response.error) throw new Error(response.error);
+
+        aiProbability = response.probability;
+        aiPrediction = aiProbability > 0.5 ? "LEGITIMATE" : "MALICIOUS";
+
+        console.log(`[Analyzer] IA: ${aiPrediction} (${(aiProbability * 100).toFixed(2)}%)`);
+    } 
+    catch (err) {
+        console.error("[Analyzer] AI ERROR:", err);
+        aiError = err.message;
+    }
+
+    // 4. Reporte Final
     const finalReport = {
         url,
-        virustotal: vtResult.status === "fulfilled" ? vtResult.value : { error: vtResult.reason },
-        structuralAnalysis: structuralResult.status === "fulfilled" ? structuralResult.value : { error: structuralResult.reason },
-        ssllabs: ssllabs.status === "fulfilled" ? ssllabs.value : { error: ssllabs.reason },
-        safebrowsing: safebrowsing.status === "fulfilled" ? safebrowsing.value : { error: safebrowsing.reason },
-        whoisfreaks: whoisfreaks.status === "fulfilled" ? whoisfreaks.value : { error: whoisfreaks.reason },
+        ai_analysis: {
+            verdict: aiPrediction,
+            probability: aiProbability,
+            is_safe: aiProbability < 0.5,
+            error: aiError
+        },
+        structuralAnalysis: structData,
+        sslAnalysis: sslData,
+        safebrowsing: sbData,
+        whoisfreaks: whoisData,
         analyzedAt: Date.now()
     };
 
     await saveIndividualReport(finalReport);
-
     return finalReport;
 }
 
