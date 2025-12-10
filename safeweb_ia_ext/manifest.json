@@ -25,7 +25,8 @@
     "permissions": [
     "tabs",
     "webNavigation",
-    "storage"
+    "storage",
+    "offscreen"
     ],
 
     "host_permissions": [
@@ -37,6 +38,30 @@
     "https://safebrowsing.googleapis.com/*",
     "https://www.whoisxmlapi.com/*",
     "https://api.whoisfreaks.com/*"
-    ]
+    ],
+
+    "web_accessible_resources": [
+    {
+        "resources": [
+        "ai/Modelo_JS_v13/model.json",
+        "ai/Modelo_JS_v13/group1-shard1of1.bin",
+        "ai/Modelo_JS_v13/normalization.json",
+        
+        "ai/tf-core.min.js",
+        "ai/tf-layers.min.js",
+        "ai/tf-backend-wasm.min.js",
+        "ai/tf-backend-wasm.wasm",
+
+        "ai/offscreen.html",
+        "ai/offscreen.js"
+        ],
+        "matches": ["<all_urls>"]
+    }
+    ],
+
+    "content_security_policy": {
+    "extension_pages": 
+        "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+    }
     
 }

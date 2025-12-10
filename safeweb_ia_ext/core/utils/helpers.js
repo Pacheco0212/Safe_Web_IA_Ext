@@ -2,132 +2,168 @@
 // Script de funciones para el analisis de URL
 // =========================================================
 
-import { SUSPICIOUS_TLDS, URL_SHORTENERS, LOGIN_KEYWORDS } from "./constants.js";
+import { SUSPICIOUS_TLDS, URL_SHORTENERS, LOGIN_KEYWORDS, REDIRECT_KEYWORDS } from "./constants.js";
 
-// Funcion de validacion de URL 
 export function safeParseUrl(raw) {
   try {
     return new URL(raw);
-  } catch {
-     try { 
-       return new URL("http://" + raw); 
-    } catch { 
-      return null; 
+  } catch (e) {
+    try {
+      return new URL("http://" + raw);
+    } catch (e2) {
+      return null;
     }
   }
 }
 
-//Funciones que verifican si el host es una dirección IP en vez de una URL
-export function isIPv4(host) {
-  return /^(\d{1,3}\.){3}\d{1,3}$/.test(host);
+export function isIpv4(host) {
+  // Regex simple equivalente al de Python
+  const regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  return regex.test(host || "");
 }
 
-export function isIPv6(host) {
-  return host.includes(":") && host.startsWith("[") ? true : /:/.test(host) && host.split(":").length >= 3;
+export function isIpv6(host) {
+  if (!host) return false;
+  return host.includes(":");
 }
 
-
-//Funcion para detecar si la URL cuenta con un nombre de dominio con caracteres especiales (fuera de codificacion ASCII) 
-//la codificacion Punycode siempre comienza con xn--
 export function hasPunycode(hostname) {
-  return hostname.split(".").some(label => label.startsWith("xn--"));
+  if (!hostname) return false;
+  const labels = hostname.split(".");
+  return labels.some(label => label.startsWith("xn--"));
 }
 
-//Funcion para contabilizar cuántas operaciones de edición hacen falta para transformar a en b
+// ========= Levenshtein distance ==========
 export function levenshtein(a, b) {
-  const la = a.length, lb = b.length;
-  if (la === 0) return lb;
-  if (lb === 0) return la;
-  const dp = Array.from({length: la + 1}, () => new Array(lb + 1).fill(0));
-  for (let i = 0; i <= la; i++) dp[i][0] = i;
-  for (let j = 0; j <= lb; j++) dp[0][j] = j;
-  for (let i = 1; i <= la; i++) {
-    for (let j = 1; j <= lb; j++) {
-      const cost = a[i-1] === b[j-1] ? 0 : 1;
-      dp[i][j] = Math.min(
-        dp[i-1][j] + 1,
-        dp[i][j-1] + 1,
-        dp[i-1][j-1] + cost
-      );
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+
+  const matrix = [];
+
+  // Inicializar primera columna y primera fila
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          Math.min(
+            matrix[i][j - 1] + 1, // insertion
+            matrix[i - 1][j] + 1  // deletion
+          )
+        );
+      }
     }
   }
-  return dp[la][lb];
+
+  return matrix[b.length][a.length];
 }
 
-// Normalizamos dividiendo entre la longitud de la palabra. Resultado entre 0 (idéntico) y 1 (totalmente distinto).
-export function normalizedDistance(a,b){ 
-  const d = levenshtein(a,b);
-  return d / Math.max(1, Math.max(a.length, b.length));
+export function normalizedDistance(a, b) {
+  if (!a || !b) return 1.0;
+  const d = levenshtein(a, b);
+  return d / Math.max(a.length, b.length, 1);
 }
 
-// Funciona similar a la distancia de levenshtein pero solo sustituimos 0 por O y 1 por l (faceb00k = facebook). 
 export function keyboardVariantSimilarity(a, b) {
-  const normalize = s => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const na = normalize(a), nb = normalize(b);
-  if (na === nb) return 0;
-  let subA = na.replace(/0/g, "o").replace(/1/g, "l");
-  let subB = nb.replace(/0/g, "o").replace(/1/g, "l");
-  return normalizedDistance(subA, subB);
+  const clean = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  let na = clean(a);
+  let nb = clean(b);
+
+  if (na === nb) return 0.0;
+
+  // Reemplazar 0 -> o, 1 -> l
+  na = na.replace(/0/g, "o").replace(/1/g, "l");
+  nb = nb.replace(/0/g, "o").replace(/1/g, "l");
+
+  return normalizedDistance(na, nb);
 }
 
-//Funcion para alguna anomalia de dominio como:
-//  Algún fragmento (subdominio) tiene >25 caracteres
-// Contiene 4 o más guiones
-// Tiene letras repetidas más de 3 veces seguidas
 export function tokenAnomalies(hostname) {
   const labels = hostname.split(".");
-  let longLabel = labels.find(l => l.length > 25);
-  let manyHyphens = labels.some(l => (l.match(/-/g) || []).length >= 4);
-  let repeatedChars = labels.some(l => /(.)\1{3,}/.test(l));
-  return { longLabel: !!longLabel, manyHyphens, repeatedChars };
+  const longLabel = labels.some(l => l.length > 25);
+  // (l.split("-").length - 1) es equivalente a l.count("-")
+  const manyHyphens = labels.some(l => (l.split("-").length - 1) >= 4);
+  // Regex para caracteres repetidos 3 o más veces: /(.)\1{3,}/
+  const repeatedChars = labels.some(l => /(.)\1{3,}/.test(l));
+
+  return {
+    longLabel,
+    manyHyphens,
+    repeatedChars
+  };
 }
 
-//Revisa el path y los parámetros en busca de palabras clave 'LOGIN_KEYWORDS'.
 export function tokensInPathOrQuery(urlObj) {
   const path = urlObj.pathname.toLowerCase();
-  const q = Array.from(urlObj.searchParams.keys()).join(" ").toLowerCase();
+  const query = urlObj.search.toLowerCase(); // search incluye el '?' y params
+
   const pathFlag = LOGIN_KEYWORDS.some(k => path.includes(k));
-  const queryFlag = LOGIN_KEYWORDS.some(k => q.includes(k));
-  return { pathFlag, queryFlag, pathSample: path.slice(0,200), querySample: q.slice(0,200) };
+  const queryFlag = LOGIN_KEYWORDS.some(k => query.includes(k));
+
+  return {
+    pathFlag,
+    queryFlag
+  };
 }
 
-
-//parametros redirecciones
 export function queryParamAnalysis(urlObj) {
-  const size = Array.from(urlObj.searchParams.keys()).length;
-  const suspiciousKeys = ["redirect","url","next","dest","continue","to","u","view","out"];
-  let suspiciousFound = [];
-  for (const k of urlObj.searchParams.keys()) {
-    if (suspiciousKeys.includes(k.toLowerCase())) suspiciousFound.push(k);
-  }
-  return { paramsCount: size, suspiciousKeys: suspiciousFound };
+  // urlObj.searchParams es un iterable tipo Map
+  const keys = Array.from(urlObj.searchParams.keys());
+  const found = keys.filter(k => REDIRECT_KEYWORDS.has(k.toLowerCase()));
+
+  return {
+    paramsCount: keys.length,
+    suspiciousKeys: found
+  };
 }
 
-// caracteres codificados
 export function encodedAnalysis(rawUrl) {
-  const pct = (rawUrl.match(/%[0-9a-fA-F]{2}/g) || []).length;
-  const pctRatio = pct / Math.max(1, rawUrl.length);
-  return { pctCount: pct, pctRatio, hasMany: pct >= 4 || pctRatio > 0.02 };
+  // Buscar % seguido de 2 hex
+  const matches = rawUrl.match(/%[0-9a-fA-F]{2}/g);
+  const pct = matches ? matches.length : 0;
+  const ratio = pct / Math.max(rawUrl.length, 1);
+
+  return {
+    pctCount: pct,
+    pctRatio: ratio,
+    hasMany: pct >= 4 || ratio > 0.02
+  };
 }
 
-//Funcion que comprueba si el dominio coincide o termina con alguno de los acortadores de URL_SHORTENERS.
 export function isShortenerHost(host) {
-  return URL_SHORTENERS.some(s => host === s || host.endsWith("." + s));
+  host = host.toLowerCase();
+  if (URL_SHORTENERS.has(host)) return true;
+  // Check if it ends with .shortener (e.g. foo.bit.ly)
+  for (const s of URL_SHORTENERS) {
+    if (host.endsWith("." + s)) return true;
+  }
+  return false;
 }
 
-//Funcion para detecar si TDL es sospechoso
 export function isSuspiciousTld(host) {
-  const parts = host.toLowerCase().split(".");
-  const tld = parts[parts.length - 1];
-  return SUSPICIOUS_TLDS.includes(tld) ? tld : null;
+  const pieces = host.split(".");
+  const tld = pieces.length > 1 ? pieces[pieces.length - 1] : "";
+  return SUSPICIOUS_TLDS.has(tld) ? tld : null;
 }
 
 export function extractBaseDomain(host) {
-  const p = host.split(".");
-  if (p.length <= 2) return p[0];
-  return p[p.length - 2];
+  const parts = host.split(".");
+  if (parts.length >= 2) {
+    return parts[parts.length - 2];
+  }
+  return host;
 }
 
-//Fucinoes para scores entre 0 y 1
-export function scoreBool(flag) { return flag ? 1 : 0; }
-export function scoreRatio(r) { return Math.min(1, Math.max(0, r)); }
+export function countDomains(hostname) {
+  if (!hostname) return 0;
+  return hostname.split(".").length;
+}

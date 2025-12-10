@@ -50,18 +50,13 @@ export async function analyzeWhoisFreaks(domain, debug) {
       : null;
 
     const report = {
-      provider: "WhoisFreaks",
-      domain,
-      success: true,
-      createdDate: created ? created.toISOString() : null,
-      updatedDate: updated ? updated.toISOString() : null,
-      expiresDate: expires ? expires.toISOString() : null,
-      registrarName,
-      registrantOrganization:
-        registrant.company || null,
-      domainAgeDays,
-      daysUntilExpiration,
-      raw: data
+      domain: domain,
+      registrar_name: registrarName,
+      created: created ? created.toISOString() : null,
+      updated: updated ? updated.toISOString() : null,
+      expires: expires ? expires.toISOString() : null,
+      domain_age_days: domainAgeDays,
+      days_until_expiration: daysUntilExpiration,
     };
 
     return report;
