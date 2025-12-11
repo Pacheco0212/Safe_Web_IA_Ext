@@ -8,7 +8,6 @@
 
 console.log("SW loaded");
 
-// Importar módulos
 import { initCapture } from "./url_capture.js";
 import { analyzeUrl } from "./analyzer.js";
 import { initApiKeys, getCaptures, saveCaptures, findExistingAnalysis } from "./utils/storage_utils.js";
@@ -18,10 +17,8 @@ let lastUrl = null;
 
 // ===== Llaves API =====
 const API_KEYS = {
-  virustotal: "5ee5c754a74d080e76ec0da50b0e7ff1af3cfde7ce9f9e81661dca1caa31c663",
   safebrowsing: "AIzaSyBde4KzBgQjmig7cO-vuhtGJjtxQB4BxQU",
-  whois: "at_hQ6ft7WIXvr7Xhh8h3KXjPTHZWF7a",
-  whoisfreaks: "5548cb282ae44a8590f13ad0c87fa287"
+  whoisfreaks: "ef2421e9ccc84c088be2b6a26df51910"
 };
 
 // ===== Initialize API keys =====
@@ -69,6 +66,25 @@ async function save(entry) {
   chrome.runtime.sendMessage({ type: "NEW_CAPTURE", payload: enrichedEntry }).catch(() => {});
 }
 
+async function ensureOffscreen() {
+    // ¿Ya existe?
+    const exists = await chrome.offscreen.hasDocument();
+    if (exists) {
+        console.log("[SW] Offscreen ya existe");
+        return;
+    }
+
+    // Crear Offscreen Document correctamente
+    await chrome.offscreen.createDocument({
+        url: chrome.runtime.getURL("ai/offscreen.html"),
+        reasons: ["WORKERS"],   // ← ESTA ES LA ÚNICA VALIDA
+        justification: "Run TensorFlow inference using WASM"
+    });
+
+    console.log("[SW] Offscreen creado correctamente");
+}
+
+
 // ===== Events capture =====
 const { captureActiveNow } = initCapture(async ({ url, fullUrl, tabId, title }) => {
   const norm = normalizeUrl(url);
@@ -80,3 +96,20 @@ const { captureActiveNow } = initCapture(async ({ url, fullUrl, tabId, title }) 
 
 chrome.runtime.onInstalled.addListener(captureActiveNow);
 chrome.runtime.onStartup.addListener(captureActiveNow);
+
+chrome.runtime.onStartup.addListener(() => {
+    ensureOffscreen();
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+    ensureOffscreen();
+});
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.action === "create_offscreen") {
+        ensureOffscreen().then(() => sendResponse({ ok: true }));
+        return true;
+    }
+});
+
+

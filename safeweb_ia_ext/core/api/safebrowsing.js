@@ -40,8 +40,15 @@ export async function analyzeWithGoogleSafeBrowsing(url, debug) {
     });
 
     if (!response.ok) {
-      const txt = await response.text();
-      throw new Error(`Google Safe Browsing request failed: ${response.status} ${response.statusText} ${txt}`);
+      const errorText = await response.text();
+      return {
+                source: "Google Safe Browsing",
+                url: url,
+                success: false,
+                malicious: false,
+                error: `HTTP ${response.status}: ${errorText}`,
+                timestamp: new Date().toISOString()
+            };
     }
 
     const data = await response.json();
@@ -51,9 +58,6 @@ export async function analyzeWithGoogleSafeBrowsing(url, debug) {
     const matches = data.matches || [];
 
     const report = {
-      source: "Google Safe Browsing",
-      url,
-      success: true,
       malicious: matches.length > 0,
       threatCount: matches.length,
       timestamp: new Date().toISOString(),
