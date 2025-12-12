@@ -106,16 +106,20 @@ export function initCapture(onCapture) {
   // 1) Cambias de pestaña activa dentro de la misma ventana de google.
   chrome.tabs.onActivated.addListener(({ tabId }) => handle(tabId));
 
-  // 2) Cambia la URL en la misma pestaña activa
+  // 2) Cambia la URL O termina de cargar (F5) en la misma pestaña activa
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (tab?.active && changeInfo.url) handle(tabId);
+    // Si cambió la URL O si la página terminó de cargar (status complete)
+    if (tab?.active && (changeInfo.url || changeInfo.status === 'complete')) {
+        handle(tabId);
+    }
   });
+  
   // 3) Útil si tienes varias ventanas de Chrome y saltas entre ellas.
-  chrome.windows?.onFocusChanged?.addListener(async (windowId) => {
-    if (windowId === chrome.windows.WINDOW_ID_NONE) return;
-    const [tab] = await chrome.tabs.query({ active: true, windowId });
-    if (tab?.id) handle(tab.id);
-  });
+  // chrome.windows?.onFocusChanged?.addListener(async (windowId) => {
+  //   if (windowId === chrome.windows.WINDOW_ID_NONE) return;
+  //   const [tab] = await chrome.tabs.query({ active: true, windowId });
+  //   if (tab?.id) handle(tab.id);
+  // });
 
 
   // API pública del módulo: función para “forzar” una captura  de la pestaña activa del usuario.

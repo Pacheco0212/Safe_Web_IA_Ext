@@ -38,8 +38,11 @@ async function analyzeUrl(url, options = { debug: false, debugAnalyzer: true }) 
     const features = extractFeaturesForModel(url, structData, sslData, whoisData, sbData);
 
     // 3. IA via Offscreen
-    let aiPrediction = "UNKNOWN";
     let aiProbability = 0;
+    let aiVerdict = "UNKNOWN"; // SAFE, SUSPICIOUS, DANGEROUS
+    let aiConfidence = 0;      // Porcentaje 0-100
+    let aiMessage = "Análisis pendiente";
+    let aiColor = "#808080";   // Gris por defecto
     let aiError = null;
 
     try {
@@ -51,13 +54,35 @@ async function analyzeUrl(url, options = { debug: false, debugAnalyzer: true }) 
         });
 
         if (!response) throw new Error("Respuesta IA vacía");
-
         if (response.error) throw new Error(response.error);
 
         aiProbability = response.probability;
-        aiPrediction = aiProbability > 0.5 ? "LEGITIMATE" : "MALICIOUS";
+        // --- LÓGICA DE SEMÁFORO (Thresholds) ---
+        // 0.0 -> Phishing (Clase 0)
+        // 1.0 -> Legítimo (Clase 1)
+        
+        aiProbability = response.probability; // Valor crudo (ej: 0.9674)
 
-        console.log(`[Analyzer] IA: ${aiPrediction} (${(aiProbability * 100).toFixed(2)}%)`);
+        if (aiProbability < 0.40) {
+            // RANGO ROJO: PELIGROSO
+            aiVerdict = "PELIGROSO";
+            aiColor = "#d32f2f"; // Rojo Material Design
+            aiMessage = "¡Sitio Peligroso! No introduzcas información personal.";
+
+        } else if (aiProbability >= 0.40 && aiProbability < 0.75) {
+            // RANGO NARANJA: SOSPECHOSO (Zona de duda)
+            aiVerdict = "SOSPECHOSO";
+            aiColor = "#f57c00"; // Naranja Material Design
+            aiMessage = "Sitio Sospechoso. Verifica la URL antes de continuar.";
+
+        } else {
+            // RANGO VERDE: SEGURO (Mayor a 0.75)
+            aiVerdict = "SEGURO";
+            aiColor = "#388e3c"; // Verde Material Design
+            aiMessage = "Sitio Seguro. Navegación verificada.";
+        }
+
+        console.log(`[Analyzer] IA Verdict: ${aiVerdict} ProbRaw: ${aiProbability.toFixed(4)}`);
     } 
     catch (err) {
         console.error("[Analyzer] AI ERROR:", err);
@@ -67,17 +92,22 @@ async function analyzeUrl(url, options = { debug: false, debugAnalyzer: true }) 
     // 4. Reporte Final
     const finalReport = {
         url,
+        analyzedAt: Date.now(),
         ai_analysis: {
-            verdict: aiPrediction,
-            probability: aiProbability,
-            is_safe: aiProbability < 0.5,
+            verdict: aiVerdict,       // "SAFE", "SUSPICIOUS", "DANGEROUS"
+            probability: aiProbability, // Valor crudo para debug
+            message: aiMessage,       // Mensaje para el usuario
+            themeColor: aiColor,      // Color para el borde/icono del popup
+            is_safe: aiVerdict === "SAFE", // Booleano simple para lógica rápida
             error: aiError
         },
-        structuralAnalysis: structData,
-        sslAnalysis: sslData,
-        safebrowsing: sbData,
-        whoisfreaks: whoisData,
-        analyzedAt: Date.now()
+        // Datos crudos por si el usuario quiere ver "Detalles avanzados"
+        details: {
+            structural: structData,
+            ssl: sslData,
+            safebrowsing: sbData,
+            whois: whoisData
+        }
     };
 
     await saveIndividualReport(finalReport);

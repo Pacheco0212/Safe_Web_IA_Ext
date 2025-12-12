@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial de Análisis - Safe Web IA</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; padding: 40px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        h1 { color: #1976d2; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: #7f8c8d; font-size: 12px; text-transform: uppercase; padding: 15px; border-bottom: 1px solid #eee; }
+        td { padding: 15px; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: #333; }
+        tr:hover { background-color: #f8faff; }
+        
+        .badge { padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 11px; }
+        .badge-safe { background: #e8f5e9; color: #2e7d32; }
+        .badge-suspicious { background: #fff3e0; color: #ef6c00; }
+        .badge-dangerous { background: #ffebee; color: #c62828; }
+
+        .url-col { max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Historial de Análisis IA</h1>
+        <table id="history-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>URL</th>
+                    <th>Veredicto IA</th>
+                    <th>Confianza</th>
+                    <!-- <th>Estado SSL</th> -->
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+    <script src="history.js" type="module"></script>
+</body>
+</html>
