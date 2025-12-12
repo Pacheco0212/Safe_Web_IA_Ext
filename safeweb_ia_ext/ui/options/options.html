@@ -1,15 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Configuración API Keys</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración - Safe Web IA</title>
+    <link rel="stylesheet" href="options.css">
 </head>
 <body>
-  <h1>Configurar API Keys</h1>
-  
-  <label for="safeKey">Google Safe Browsing API Key:</label>
-  <input type="text" id="safeKey" />
-  <button id="saveKey">Guardar</button>
 
-  <script src="options.js"></script>
+    <div class="container">
+        <aside>
+            <div class="logo-area">
+                <img src="../icons/safe.png" alt="Logo" class="logo"> <h1>Safe Web IA</h1>
+            </div>
+            <nav>
+                <a href="#general" class="active">General</a>
+                <a href="#api">API Keys</a>
+                <a href="#data">Datos y Privacidad</a>
+                <a href="#about">Acerca de</a>
+            </nav>
+        </aside>
+
+        <main>
+            
+            <section id="general">
+                <h2>Configuración General</h2>
+                <div class="card">
+                    <div class="setting-item">
+                        <div class="info">
+                            <label>Protección en tiempo real</label>
+                            <p>Analizar automáticamente las URLs al navegar.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="opt-protection">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="setting-item">
+                        <div class="info">
+                            <label>Alertas visuales</label>
+                            <p>Mostrar la burbuja emergente con el resultado del análisis.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="opt-bubbles">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <section id="api">
+                <h2>Configuración de APIs</h2>
+                <p class="section-desc">Gestiona las llaves para los servicios de terceros.</p>
+                <div class="card">
+                    <div class="input-group">
+                        <label for="api-whois">WhoisFreaks API Key</label>
+                        <input type="text" id="api-whois" placeholder="Pegar llave aquí...">
+                    </div>
+                    <div class="input-group">
+                        <label for="api-sb">Google Safe Browsing API Key</label>
+                        <input type="text" id="api-sb" placeholder="Pegar llave aquí...">
+                    </div>
+                    <button id="btn-save-keys" class="btn-primary">Guardar Llaves</button>
+                </div>
+            </section>
+
+            <section id="data">
+                <h2>Gestión de Datos</h2>
+                <div class="card">
+                    <div class="setting-item">
+                        <div class="info">
+                            <label>Historial de análisis</label>
+                            <p>Eliminar todo el registro de páginas escaneadas localmente.</p>
+                        </div>
+                        <button id="btn-clear-history" class="btn-danger">Borrar Historial</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="about">
+                <h2>Acerca de</h2>
+                <div class="card">
+                    <p><strong>Safe Web IA</strong> v1.0</p>
+                    <p>Desarrollado como proyecto de tesis para detección de Phishing mediante Deep Learning en el navegador.</p>
+                    <p style="color: #7f8c8d; font-size: 12px; margin-top: 10px;">Powered by TensorFlow.js</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="toast" class="toast">✅ Configuración guardada</div>
+
+    <script src="options.js" type="module"></script>
 </body>
 </html>

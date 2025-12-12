@@ -1,23 +1,65 @@
-
-<!doctype html>
-<html>
-
+<!DOCTYPE html>
+<html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <title>Capturas</title>
-  <style>
-    body{font:13px system-ui,sans-serif;min-width:360px;margin:12px}
-    ul{list-style:none;margin:0;padding:0;max-height:360px;overflow:auto}
-    li{border-bottom:1px solid #eee;padding:6px 0}
-  </style>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+  <title>Safe Web IA</title>
 </head>
-
-
 <body>
-  <h3 style="margin:0 0 8px">Últimas URLs</h3>
-  <ul id="list"></ul>
-  <button id="clear">Limpiar</button>
-  
-  <script type="module" src="popup.js"></script>
+
+  <div class="app-container">
+    <header>
+      <h1>Safe Web IA</h1>
+      <div class="status-badge" id="current-status-badge">
+        <span class="dot"></span> <span id="status-text">Protegido</span>
+      </div>
+    </header>
+
+    <div class="card settings-card">
+      
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-title">Modo de protección</span>
+          <span class="setting-desc">Análisis en tiempo real</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-protection" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-title">Alertas emergentes</span>
+          <span class="setting-desc">Mostrar burbuja de resultados</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-bubbles" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+    </div>
+
+    <div class="card stats-card">
+      <h2>Historial</h2>
+      <div class="stat-item">
+        <span class="stat-label">Páginas escaneadas</span>
+        <span class="stat-value" id="scan-count">0</span>
+      </div>
+    </div>
+
+    <button id="btn-open-history" class="btn-primary">
+      Ver Historial Detallado ↗
+    </button>
+
+    <footer>
+      <p>Safe Web IA v1.0 • Powered by TensorFlow.js</p>
+    </footer>
+  </div>
+
+  <script src="popup.js" type="module"></script>
 </body>
 </html>

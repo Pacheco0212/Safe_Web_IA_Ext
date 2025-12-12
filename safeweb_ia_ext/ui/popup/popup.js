@@ -1,41 +1,73 @@
-/**
- Responsabilidad: Leer del storage y mostrar el historial de capturas.
- No registra listeners del navegador (eso es del SW).
- */
+import { getCaptures, getSettings } from "../../core/utils/storage_utils.js";
 
-const STORAGE_KEY = 'captures';
-const listEl = document.getElementById('list');
+document.addEventListener('DOMContentLoaded', async () => {
+    
+    // --- 1. CARGAR CONTADOR (HISTORIAL) ---
+    try {
+        const captures = await getCaptures();
+        const countElement = document.getElementById('scan-count');
+        if (countElement) {
+            // Mostramos el total de URLs únicas analizadas
+            countElement.textContent = captures.length;
+        }
+    } catch (error) {
+        console.error("Error cargando historial:", error);
+        const countElement = document.getElementById('scan-count');
+        if (countElement) countElement.textContent = "0";
+    }
 
-/** Dibuja la lista en el DOM */
-function render(items=[]) {
-  listEl.innerHTML = '';
-  for (const it of items) {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.href = it.url; a.textContent = it.title ? `${it.title} — ${it.url}` : it.url; a.target = '_blank';
-    const meta = document.createElement('div');
-    meta.style.opacity = '0.7';
-    meta.textContent = new Date(it.ts).toLocaleString();
-    li.appendChild(a); li.appendChild(meta);
-    listEl.appendChild(li);
-  }
-}
+    // --- 2. CARGAR ESTADO DE LOS SWITCHES (CRÍTICO) ---
+    // Aquí es donde arreglamos que se "reinicien" solos.
+    try {
+        const settings = await getSettings(); // Leemos de storage_utils
+        
+        const toggleProt = document.getElementById('toggle-protection');
+        const toggleBubbles = document.getElementById('toggle-bubbles');
+        
+        // Ajustamos el switch visualmente según lo guardado
+        if (toggleProt) toggleProt.checked = settings.protection;
+        if (toggleBubbles) toggleBubbles.checked = settings.bubbles;
 
-/** Borra historial + limpia badge */
-async function refresh() {
-  const { [STORAGE_KEY]: items = [] } = await chrome.storage.local.get(STORAGE_KEY);
-  render(items);
-}
+    } catch (error) {
+        console.error("Error cargando configuración:", error);
+    }
 
-document.getElementById('clear').addEventListener('click', async () => {
-  await chrome.storage.local.set({ [STORAGE_KEY]: [] });
-  render([]);
-  chrome.action.setBadgeText({ text: '' });
+    // --- 3. GUARDAR CAMBIOS AL HACER CLICK ---
+    const saveSettings = () => {
+        const toggleProt = document.getElementById('toggle-protection');
+        const toggleBubbles = document.getElementById('toggle-bubbles');
+
+        const newSettings = {
+            protection: toggleProt ? toggleProt.checked : true,
+            bubbles: toggleBubbles ? toggleBubbles.checked : true
+        };
+        
+        // Guardamos en la memoria local
+        chrome.storage.local.set({ settings: newSettings }, () => {
+            console.log("Configuración guardada:", newSettings);
+            
+            // Opcional: Cambiar badge visualmente
+            if (!newSettings.protection) {
+                 chrome.action.setBadgeText({ text: "OFF" });
+                 chrome.action.setBadgeBackgroundColor({ color: "#999" });
+            } else {
+                 chrome.action.setBadgeText({ text: "" });
+            }
+        });
+    };
+
+    // Listeners para detectar clicks
+    const tProt = document.getElementById('toggle-protection');
+    const tBubb = document.getElementById('toggle-bubbles');
+
+    if (tProt) tProt.addEventListener('change', saveSettings);
+    if (tBubb) tBubb.addEventListener('change', saveSettings);
+
+    // --- 4. BOTÓN DE HISTORIAL ---
+    const btnHistory = document.getElementById('btn-open-history');
+    if (btnHistory) {
+        btnHistory.addEventListener('click', () => {
+            chrome.tabs.create({ url: 'ui/history/history.html' });
+        });
+    }
 });
-
-/** Recibe avisos del SW para refrescar en caliente */
-chrome.runtime.onMessage.addListener((m) => {
-  if (m?.type === 'NEW_CAPTURE') refresh();
-});
-
-refresh();
