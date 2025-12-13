@@ -66,3 +66,24 @@ export async function createGlobalReport() {
   console.log("[Storage] Reporte global creado:", unified);
   return unified;
 }
+
+// Inicializar configuración por defecto (Protección y Burbujas ACTIVAS)
+export function initSettings() {
+    chrome.storage.local.get(['settings'], (result) => {
+        if (!result.settings) {
+            chrome.storage.local.set({
+                settings: { protection: true, bubbles: true }
+            });
+        }
+    });
+}
+
+// Obtener configuración actual
+export async function getSettings() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(['settings'], (result) => {
+            // Si no existe, devolvemos TRUE por defecto
+            resolve(result.settings || { protection: true, bubbles: true });
+        });
+    });
+}
