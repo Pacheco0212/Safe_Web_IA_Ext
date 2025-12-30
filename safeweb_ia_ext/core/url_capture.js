@@ -108,7 +108,8 @@ export function initCapture(onCapture) {
 
   // 2) Cambia la URL O termina de cargar (F5) en la misma pestaña activa
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    // Si cambió la URL O si la página terminó de cargar (status complete)
+  
+  // 3) Si cambió la URL O si la página terminó de cargar (status complete)
     if (tab?.active && (changeInfo.url || changeInfo.status === 'complete')) {
         handle(tabId);
     }

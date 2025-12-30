@@ -99,7 +99,7 @@ async function getSslInfo(domain) {
 }
 
 function normalizeSslReport(fullJson, domain) {
-    /* Convierte el JSON enorme de WhoisFreaks a un reporte conciso. */
+    /* Convierte el JSON de WhoisFreaks a un reporte conciso. */
     try {
         // sslCertificates SIEMPRE es una lista en la respuesta exitosa
         const certs = fullJson.sslCertificates || [];

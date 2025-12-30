@@ -72,8 +72,8 @@ async function analyzeUrl(url, options = { debug: false, debugAnalyzer: true }) 
         } else if (aiProbability >= 0.40 && aiProbability < 0.75) {
             // RANGO NARANJA: SOSPECHOSO (Zona de duda)
             aiVerdict = "SOSPECHOSO";
-            aiColor = "#f57c00"; // Naranja Material Design
-            aiMessage = "Sitio Sospechoso. Verifica la URL antes de continuar.";
+            aiColor = "#f5d400ff"; // Naranja Material Design
+            aiMessage = "Sitio Sospechoso. Evita introducir información personal.";
 
         } else {
             // RANGO VERDE: SEGURO (Mayor a 0.75)
