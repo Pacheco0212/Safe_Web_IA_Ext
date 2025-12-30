@@ -22,9 +22,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Clases para colores
         let badgeClass = 'badge-safe';
-        if (verdict === 'DANGEROUS') badgeClass = 'badge-dangerous';
-        if (verdict === 'SUSPICIOUS') badgeClass = 'badge-suspicious';
-
+        if (verdict === 'PELIGROSO' || verdict === 'DANGEROUS') {
+            badgeClass = 'badge-dangerous';
+        } else if (verdict === 'SOSPECHOSO' || verdict === 'SUSPICIOUS') {
+            badgeClass = 'badge-suspicious';
+        }
         row.innerHTML = `
             <td>${date}</td>
             <td class="url-col" title="${entry.url}">
