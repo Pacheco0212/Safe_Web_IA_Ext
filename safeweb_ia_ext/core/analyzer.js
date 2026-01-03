@@ -67,12 +67,12 @@ async function analyzeUrl(url, options = { debug: false, debugAnalyzer: true }) 
             // RANGO ROJO: PELIGROSO
             aiVerdict = "PELIGROSO";
             aiColor = "#d32f2f"; // Rojo Material Design
-            aiMessage = "¡Sitio Peligroso! No introduzcas información personal.";
+            aiMessage = "¡SITIO PELIGROSO! NO INTRODUZCAS INFORMACIÓN PERSONAL.";
 
         } else if (aiProbability >= 0.40 && aiProbability < 0.75) {
-            // RANGO NARANJA: SOSPECHOSO (Zona de duda)
+            // RANGO AMARILLO: SOSPECHOSO (Zona de duda)
             aiVerdict = "SOSPECHOSO";
-            aiColor = "#f5d400ff"; // Naranja Material Design
+            aiColor = "#f5d400ff"; // Amarillo Material Design
             aiMessage = "Sitio Sospechoso. Evita introducir información personal.";
 
         } else {
