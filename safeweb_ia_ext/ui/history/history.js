@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- 4. PREPARACIÓN DE VALORES ---
         const bool = (val) => val ? '<span style="color:#d32f2f; font-weight:bold;">SÍ</span>' : '<span style="color:#2e7d32;">No</span>';
+        const bool2 = (val) => val ? '<span style="color:#2e7d32; font-weight:bold;">SÍ</span>' : '<span style="color:#d32f2f;">No</span>';
         
         const validFrom = ssl.valid_from ? new Date(ssl.valid_from).toLocaleDateString() : '-';
         const validTo = ssl.valid_to ? new Date(ssl.valid_to).toLocaleDateString() : '-';
@@ -82,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="detail-item"><span class="detail-label">Parámetros:</span> <span class="detail-val">${struct.paramCount || 0}</span></div>
                         <div class="detail-item"><span class="detail-label">Params Sospechosos:</span> <span class="detail-val">${suspiciousParamsCount}</span></div>
                         <div class="detail-item"><span class="detail-label">Chars Codificados:</span> <span class="detail-val">${struct.encodedCount || 0} (${bool(struct.hasEncodedChars)})</span></div>
-                        <div class="detail-item"><span class="detail-label">¿Usa HTTPS?:</span> <span class="detail-val">${bool(struct.usesHttps)}</span></div>
+                        <div class="detail-item"><span class="detail-label">¿Usa HTTPS?:</span> <span class="detail-val">${bool2(struct.usesHttps)}</span></div>
                     </div>
 
                     <div class="detail-box">
