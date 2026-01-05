@@ -118,7 +118,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="detail-item"><span class="detail-label">SafeBrowsing:</span> <span class="detail-val">${bool(sb.malicious)}</span></div>
                         <div class="detail-item"><span class="detail-label">Amenazas (SB):</span> <span class="detail-val">${threatsCount}</span></div>
                         <div class="detail-item"><span class="detail-label"><strong>Probabilidad:</strong></span> <span class="detail-val">${Number(probability).toFixed(6)}</span></div>
-                        <div class="detail-item"><span class="detail-label">Modelo:</span> <span class="detail-val">TensorFlow (v13)</span></div>
                     </div>
 
                 </div>
