@@ -79,7 +79,7 @@ async function analyzeUrl(url, options = { debug: false, debugAnalyzer: true }) 
             // RANGO VERDE: SEGURO (Mayor a 0.75)
             aiVerdict = "SEGURO";
             aiColor = "#388e3c"; // Verde Material Design
-            aiMessage = "Sitio Seguro. Navegación verificada.";
+            aiMessage = "Sitio Seguro. Puedes continuar navegando.";
         }
 
         console.log(`[Analyzer] IA Verdict: ${aiVerdict} ProbRaw: ${aiProbability.toFixed(4)}`);

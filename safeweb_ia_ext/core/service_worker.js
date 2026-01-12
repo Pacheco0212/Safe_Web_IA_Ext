@@ -16,7 +16,7 @@ const tabsProcessing = new Set();
 
 const API_KEYS = {
   safebrowsing: "AIzaSyBde4KzBgQjmig7cO-vuhtGJjtxQB4BxQU",
-  whoisfreaks: "fb98ade12e6a40408dbe96bfc4f70091"
+  whoisfreaks: "5548cb282ae44a8590f13ad0c87fa287"
 };
 
 // Inicializamos Keys y también los Settings por defecto
